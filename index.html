@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Articulation Dashboard</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:900px;margin:24px auto;padding:0 16px;color:#222}
+h1{font-size:22px}h2{font-size:17px;margin-top:28px;border-bottom:1px solid #ddd;padding-bottom:4px}
+table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:6px;vertical-align:top;text-align:left}
+textarea,input{width:100%;box-sizing:border-box;font:inherit;border:1px solid #ccc;padding:4px}
+select{font:inherit}.strong{background:#e3f6e3}.improving{background:#fff6d6}.needs{background:#fde2e2}
+button{margin-right:8px;padding:6px 12px}.row{display:flex;gap:12px;align-items:center}
+</style></head><body>
+<h1>Weekly Articulation Dashboard — Muhammad Anjum</h1>
+<div class="row"><label>Week of <input id="week" type="date" style="width:auto"></label>
+<button onclick="save()">Save</button><button onclick="newWeek()">New week</button>
+<select id="hist" onchange="load(this.value)"></select></div>
+<h2>Metrics</h2>
+<table><thead><tr><th style="width:18%">Metric</th><th style="width:16%">Rating</th><th>Evidence (quotes from his answers)</th></tr></thead><tbody id="metrics"></tbody></table>
+<h2>Known patterns and natural alternatives</h2>
+<table><thead><tr><th>Pattern</th><th>Natural alternative</th><th style="width:22%">Seen this week?</th></tr></thead><tbody id="patterns"></tbody></table>
+<button onclick="addPattern()" style="margin-top:6px">+ Add pattern</button>
+<h2>Weekly notes</h2>
+<p><b>Top improvement</b><textarea id="n1" rows="2"></textarea></p>
+<p><b>One pattern to watch</b><textarea id="n2" rows="2"></textarea></p>
+<p><b>Next week's focus</b><textarea id="n3" rows="2"></textarea></p>
+<script>
+const M=["Clarity","Concision","Natural wording","Structure","Composure under pressure"];
+const P0=[["\"thank you for rectification\"","\"thanks for catching that\" / \"good catch\""],["\"get used to of coffee\"","\"get used to coffee\""],["\"evaluated upon\"","\"evaluated against\""],["\"sell it back to\"","\"sell it to\""],["Restarting the same sentence with the same words","Commit to version one and keep going"],["Burying the main point at the end","Lead with the point, then support it"],["Over-explaining after the point is made","Stop once the point lands"],["Hedges (\"I mean\", \"you know\", \"uh\") clustering before the key clause","Pause silently, then say the key clause"]];
+const K="artic_dash";const db=()=>JSON.parse(localStorage.getItem(K)||"{}");
+function render(d){d=d||{};document.getElementById("metrics").innerHTML=M.map((m,i)=>{const r=(d.r||[])[i]||"";return `<tr><td>${m}</td><td><select class="${r}" onchange="this.className=this.value"><option value=""></option><option value="strong" ${r=="strong"?"selected":""}>Strong</option><option value="improving" ${r=="improving"?"selected":""}>Improving</option><option value="needs" ${r=="needs"?"selected":""}>Needs work</option></select></td><td><textarea rows="2">${(d.e||[])[i]||""}</textarea></td></tr>`}).join("");
+const ps=d.p||P0.map(x=>[x[0],x[1],""]);document.getElementById("patterns").innerHTML="";ps.forEach(p=>addPattern(p));
+["n1","n2","n3"].forEach(k=>document.getElementById(k).value=d[k]||"");}
+function esc(s){return (s||"").replace(/"/g,"&quot;")}
+function addPattern(p){p=p||["","",""];const tr=document.createElement("tr");tr.innerHTML=`<td><input value="${esc(p[0])}"></td><td><input value="${esc(p[1])}"></td><td><input value="${esc(p[2])}"></td>`;document.getElementById("patterns").appendChild(tr)}
+function collect(){return{r:[...document.querySelectorAll("#metrics select")].map(s=>s.value),e:[...document.querySelectorAll("#metrics textarea")].map(t=>t.value),p:[...document.querySelectorAll("#patterns tr")].map(tr=>[...tr.querySelectorAll("input")].map(i=>i.value)),n1:n1.value,n2:n2.value,n3:n3.value}}
+function save(){const w=week.value;if(!w){alert("Pick the week date first");return}const d=db();d[w]=collect();localStorage.setItem(K,JSON.stringify(d));hist_();alert("Saved")}
+function load(w){if(!w)return;week.value=w;render(db()[w])}
+function newWeek(){const cur=collect();week.value="";render({p:cur.p.map(x=>[x[0],x[1],""])})}
+function hist_(){const h=document.getElementById("hist");h.innerHTML='<option value="">Past weeks…</option>'+Object.keys(db()).sort().reverse().map(w=>`<option>${w}</option>`).join("")}
+hist_();render();
+</script></body></html>
